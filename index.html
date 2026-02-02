@@ -1,1 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Be My Valentine 💖</title>
+
+  <style>
+    :root {
+      --pink1: #ffe4f1;
+      --pink2: #fff0f7;
+      --hot: #ff4f8b;
+      --hot2: #ff7eb3;
+      --shadow: rgba(255, 120, 170, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100svh; /* better on mobile than 100vh */
+      display: grid;
+      place-items: center;
+      font-family: "Comic Sans MS", "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--pink1), var(--pink2));
+      overflow: hidden;
+      padding: 16px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* floating hearts */
+    .heart {
+      position: absolute;
+      opacity: 0.65;
+      user-select: none;
+      pointer-events: none;
+      filter: drop-shadow(0 6px 10px rgba(255, 120, 170, 0.25));
+      animation: float 6s linear infinite;
+      will-change: transform;
+    }
+
+    @keyframes float {
+      from { transform: translateY(110vh) translateX(0); }
+      to   { transform: translateY(-20vh) translateX(var(--drift, 0px)); }
+    }
+
+    .card {
+      width: min(420px, 92vw);
+      background: #fff;
+      border-radius: 30px;
+      padding: 26px 18px 28px;
+      text-align: center;
+      box-shadow: 0 20px 40px var(--shadow);
+      position: relative;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 5vw, 34px);
+      color: #ff5fa2;
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 10px 0 18px;
+      font-size: clamp(14px, 3.6vw, 16px);
+      color: #555;
+    }
+
+    .arena {
+      position: relative;
+      height: clamp(160px, 26vh, 220px);
+      border-radius: 20px;
+      background: #fff6fb;
+      border: 2px dashed #ffc1dc;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    button {
+      position: absolute;
+      padding: 14px 22px;
+      font-size: 18px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    button:active { transform: scale(0.96); }
+
+    #yes {
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--hot2), var(--hot));
+      color: white;
+      box-shadow: 0 10px 20px rgba(255, 80, 150, 0.4);
+      min-width: 170px;
+    }
+
+    #no {
+      left: 18px;
+      top: 18px;
+      background: #b9b9b9;
+      color: white;
+      min-width: 120px;
+    }
+
+    /* pop animation for YES */
+    .pop {
+      animation: pop 450ms ease-out;
+    }
+    @keyframes pop {
+      0%   { transform: translateX(-50%) scale(1); }
+      60%  { transform: translateX(-50%) scale(1.12); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+
+    .result {
+      margin-top: 16px;
+      font-size: clamp(18px, 4.5vw, 20px);
+      font-weight: 900;
+      color: var(--hot);
+      min-height: 1.6em;
+    }
+
+    /* small phones: slightly smaller buttons */
+    @media (max-width: 360px) {
+      button { font-size: 16px; padding: 12px 18px; }
+      #yes { min-width: 155px; }
+      #no  { min-width: 108px; }
+    }
+
+    /* respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .heart { animation: none; }
+      button { transition: none; }
+      .pop { animation: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Will you be my Valentine? 💕</h1>
+    <p>I promise snacks, cuddles, and endless love 💌</p>
+
+    <div class="arena" id="arena" aria-label="Valentine buttons arena">
+      <button id="yes" type="button">YES!! 💖</button>
+      <button id="no" type="button">No 😳</button>
+    </div>
+
+    <div class="result" id="result" aria-live="polite"></div>
+  </div>
+
+  <script>
+    // Floating hearts (mobile-friendly, non-interactive)
+    const hearts = ["💖","💕","💗","💘","💝"];
+    const heartCount = 24;
+
+    for (let i = 0; i < heartCount; i++) {
+      const h = document.createElement("div");
+      h.className = "heart";
+      h.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+      h.style.left = Math.random() * 100 + "vw";
+      h.style.animationDelay = Math.random() * 6 + "s";
+      h.style.animationDuration = (4 + Math.random() * 5) + "s";
+      h.style.setProperty("--drift", ((Math.random() * 120) - 60) + "px");
+      h.style.fontSize = (16 + Math.random() * 22) + "px";
+      document.body.appendChild(h);
+    }
+
+    const arena = document.getElementById("arena");
+    const noBtn = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+    const result = document.getElementById("result");
+
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function moveNo() {
+      const a = arena.getBoundingClientRect();
+      const n = noBtn.getBoundingClientRect();
+
+      // Keep inside arena with a little padding
+      const pad = 10;
+
+      const maxX = Math.max(0, a.width - n.width - pad);
+      const maxY = Math.max(0, a.height - n.height - pad);
+
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+
+      noBtn.style.left = clamp(x, 0, maxX) + "px";
+      noBtn.style.top  = clamp(y, 0, maxY) + "px";
+    }
+
+    // Run away in basically every situation
+    noBtn.addEventListener("mouseenter", moveNo);
+
+    noBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      moveNo();
+    });
+
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      moveNo();
+    });
+
+    // If keyboard tries to focus it, it escapes too
+    noBtn.addEventListener("focus", moveNo);
+
+    yesBtn.addEventListener("click", () => {
+      result.textContent = "YAY!!! 💞🥹 I’m so happy!!";
+      noBtn.style.display = "none";
+
+      // pop YES
+      yesBtn.classList.remove("pop");
+      void yesBtn.offsetWidth; // restart animation
+      yesBtn.classList.add("pop");
+
+      // emoji confetti burst (re-uses .heart styling)
+      for (let i = 0; i < 18; i++) {
+        const s = document.createElement("div");
+        s.className = "heart";
+        s.textContent = ["✨","💖","🎉","💘"][Math.floor(Math.random() * 4)];
+        s.style.left = (45 + Math.random() * 10) + "vw";
+        s.style.top = (40 + Math.random() * 10) + "vh";
+        s.style.animationDelay = "0s";
+        s.style.animationDuration = (1.2 + Math.random() * 0.8) + "s";
+        s.style.setProperty("--drift", ((Math.random() * 180) - 90) + "px");
+        s.style.opacity = 1;
+        s.style.fontSize = (18 + Math.random() * 18) + "px";
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 1800);
+      }
+    });
+
+    // On load, ensure the "No" button starts safely inside the arena on small screens
+    window.addEventListener("load", () => {
+      // make sure arena layout is ready
+      moveNo();
+    });
+
+    // If orientation changes, re-place "No" so it stays in-bounds
+    window.addEventListener("resize", () => {
+      if (noBtn.style.display !== "none") moveNo();
+    });
+  </script>
+</body>
+</html>
 
